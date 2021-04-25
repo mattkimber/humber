@@ -23,7 +23,7 @@ func WriteHull(hull hull.Hull) error {
 				y := float64(k)/2 - float64(hull.Height-1)/2
 
 				if (x*x)/(a*a) + (y*y)/(b*b) <= 1 {
-					pt := geometry.NewPoint(i,j,k)
+					pt := geometry.NewPoint(hull.Length-(1+i),j,k)
 					object.Set(pt, hull.Index)
 				}
 			}
