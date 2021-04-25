@@ -1,48 +1,30 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"github.com/mattkimber/humber/internal/hull"
 	"github.com/mattkimber/humber/internal/voxels"
 	"log"
 )
 
-func main() {
-	h := hull.Hull{
-		Length:   88,
-		Width:    26,
-		Height:   8,
-		Index: 	  10,
-		Sections: []hull.Section{
-			{
-				Start:    0,
-				Width:    0,
-				Tweening: hull.TweenAlgorithmLinear,
-			},
-			{
-				Start:    0.25,
-				Width:    0.8,
-				Tweening: hull.TweenAlgorithmLinear,
-			},
-			{
-				Start:    0.5,
-				Width:    1.0,
-				Tweening: hull.TweenAlgorithmLinear,
-			},
-			{
-				Start:    0.75,
-				Width:    1.0,
-				Tweening: hull.TweenAlgorithmLinear,
-			},
-			{
-				Start:    1.0,
-				Width:    0.75,
-				Tweening: hull.TweenAlgorithmLinear,
-			},
-		},
-	}
 
-	err := voxels.WriteHull(h, "output2.vox")
-	if err != nil {
-		log.Fatal(err)
+func main() {
+	flag.Parse()
+
+	for _, file := range flag.Args() {
+		// Read the file
+		h, err := hull.FromFile(file)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = voxels.WriteHull(h)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Show progress
+		fmt.Printf(".")
 	}
 }
