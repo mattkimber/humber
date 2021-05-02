@@ -1,5 +1,5 @@
 module github.com/mattkimber/humber
 
-go 1.14
+go 1.15
 
-require github.com/mattkimber/gandalf v1.0.0
+require github.com/mattkimber/gandalf v1.3.0
