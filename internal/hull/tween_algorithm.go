@@ -12,6 +12,7 @@ const (
 	TweenAlgorithmSquareRoot
 	TweenAlgorithmReverseSquareRoot
 	TweenAlgorithmSquare
+	TweenAlgorithmSpline
 )
 
 func (ta TweenAlgorithm) String() string {
@@ -24,6 +25,8 @@ func (ta TweenAlgorithm) String() string {
 		return "square"
 	case TweenAlgorithmReverseSquareRoot:
 		return "reverse_square_root"
+	case TweenAlgorithmSpline:
+		return "spline"
 	default:
 		return "unknown"
 	}
@@ -39,6 +42,8 @@ func GetTweenAlgorithmFromName(input string) TweenAlgorithm {
 		return TweenAlgorithmReverseSquareRoot
 	case "square":
 		return TweenAlgorithmSquare
+	case "spline":
+		return TweenAlgorithmSpline
 	default:
 		return TweenAlgorithmLinear
 	}

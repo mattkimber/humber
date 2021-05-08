@@ -34,6 +34,7 @@ type Dimensions struct {
 func (h *Hull) GetDimensions(x int) Dimensions {
 	fraction := float64(x) / float64(h.Length)
 
+	curTangent, nextTangent := 0.0, 0.0
 	curWidth, nextWidth := 0.0, 0.0
 	curStart, nextStart := 0.0, 1.0
 	curKeel, nextKeel := 0.0, 1.0
@@ -44,6 +45,11 @@ func (h *Hull) GetDimensions(x int) Dimensions {
 			nextWidth = h.Sections[i].Width
 			nextStart = h.Sections[i].Start
 			nextKeel = h.Sections[i].Keel
+
+			if i > 0 {
+				nextTangent = (h.Sections[i].Width - h.Sections[i-1].Width) / (h.Sections[i].Start - h.Sections[i-1].Start)
+			}
+
 			break
 		}
 
@@ -51,6 +57,11 @@ func (h *Hull) GetDimensions(x int) Dimensions {
 		curStart = h.Sections[i].Start
 		curKeel = h.Sections[i].Keel
 		algorithm = h.Sections[i].Tweening
+
+		if i > 0 {
+			curTangent = (h.Sections[i].Width - h.Sections[i-1].Width) / (h.Sections[i].Start - h.Sections[i-1].Start)
+		}
+
 	}
 
 
@@ -78,6 +89,15 @@ func (h *Hull) GetDimensions(x int) Dimensions {
 	case TweenAlgorithmSquare:
 		t1 = 1.0 - (tween * tween)
 		t2 = tween * tween
+	case TweenAlgorithmSpline:
+		t1 = 1.0 - tween
+		t2 = tween
+		thisTangent := ((curTangent * t1) + (nextTangent * t2)) * tweenLength
+		width := curWidth + (thisTangent * tween)
+		return Dimensions{
+			Width: int(width * float64(h.Width)),
+			Keel: int((1.0 - ((curKeel * t1) + (nextKeel * t2))) * float64(h.Height)),
+		}
 	}
 
 	return Dimensions{

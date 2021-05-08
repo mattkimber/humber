@@ -21,4 +21,4 @@ Some sample files are provided in the `sample` directory.
   * start: Where this section starts along the length as a fraction (0..1)
   * width: The width of this section as a fraction of total width (0..1)
   * keel: Adjust the depth of the keel, where 0 is full depth and 1 is the deck height
-  * tween_algorithm: How to tween values between this section and the next (`linear`, `square` or `square_root`)
+  * tween_algorithm: How to tween values between this section and the next (`linear`, `square`, `square_root`, `reverse_square_root` or `spline`)
