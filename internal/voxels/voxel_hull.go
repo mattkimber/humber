@@ -7,29 +7,31 @@ import (
 	"github.com/mattkimber/humber/internal/palette"
 )
 
-func WriteHull(hull hull.Hull) error {
-	size := geometry.NewPoint(hull.Length, hull.Width, hull.Height)
+func WriteHull(hf hull.HullFile) error {
+	size := geometry.NewPoint(hf.Length, hf.Width, hf.Height)
 	object := magica.NewVoxelObject(size, palette.GetDefault())
 
-	for i := 0; i < hull.Length; i++ {
-		dimensions := hull.GetDimensions(i)
-		for j := 0; j < hull.Width; j++ {
-			a := float64(dimensions.Width) / 2
-			x := (float64(j)) - (float64(hull.Width-1) / 2)
+	for _, h := range hf.Hulls {
+		for i := 0; i < hf.Length; i++ {
+			dimensions := h.GetDimensions(i, hf.Length, hf.Width, hf.Height)
+			for j := 0; j < hf.Width; j++ {
+				a := float64(dimensions.Width) / 2
+				x := (float64(j)) - (float64(hf.Width-1) / 2)
 
-			for k := 0; k < hull.Height; k++ {
+				for k := 0; k < hf.Height; k++ {
 
-				b := float64(dimensions.Keel) / 2
-				y := float64(k)/2 - float64(hull.Height-1)/2
+					b := float64(dimensions.Keel) / 2
+					y := float64(k)/2 - float64(hf.Height-1)/2
 
-				if (x*x)/(a*a) + (y*y)/(b*b) <= 1 {
-					pt := geometry.NewPoint(hull.Length-(1+i),j,k)
-					object.Set(pt, hull.Index)
+					if (x*x)/(a*a)+(y*y)/(b*b) <= 1 {
+						pt := geometry.NewPoint(hf.Length-(1+i), j, k)
+						object.Set(pt, h.Index)
+					}
 				}
 			}
 		}
 	}
 
-	err := object.SaveToFile(hull.FileName)
+	err := object.SaveToFile(hf.FileName)
 	return err
 }

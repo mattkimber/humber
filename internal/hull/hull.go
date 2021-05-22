@@ -7,12 +7,16 @@ import (
 	"os"
 )
 
-// Hull represents a hull, with a voxel length/width/height and list of sections
-type Hull struct {
+type HullFile struct {
 	FileName string `json:"filename"`
 	Length int `json:"length"`
 	Width int `json:"width"`
 	Height int `json:"height"`
+	Hulls []Hull `json:"hulls"`
+}
+
+// Hull represents a hull, with a voxel length/width/height and list of sections
+type Hull struct {
 	Index byte `json:"palette_index"`
 	Sections []Section `json:"sections"`
 }
@@ -45,11 +49,15 @@ func (sp SplinePoint) Add(sp2 SplinePoint) SplinePoint {
 
 
 // GetWidth gets the width at the specified section of hull
-func (h *Hull) GetDimensions(x int) Dimensions {
-	fraction := float64(x) / float64(h.Length)
+func (h *Hull) GetDimensions(x int, length, width, height int) Dimensions {
+	fraction := float64(x) / float64(length)
 
 	p0 := SplinePoint{l: 0.0, w: 0.0}
 	p1, p2, p3 := p0, p0, p0
+
+
+	k0 := SplinePoint{l: 0.0, w: 0.0}
+	k1, k2, k3 := k0, k0, k0
 
 	curWidth, nextWidth := 0.0, 0.0
 	curStart, nextStart := 0.0, 1.0
@@ -63,9 +71,11 @@ func (h *Hull) GetDimensions(x int) Dimensions {
 			nextKeel = h.Sections[i].Keel
 
 			p2 = SplinePoint{l: h.Sections[i].Start, w: h.Sections[i].Width}
+			k2 = SplinePoint{l: h.Sections[i].Start, w: h.Sections[i].Keel}
 
 			if i < len(h.Sections) - 1 {
 				p3 = SplinePoint{l: h.Sections[i+1].Start, w: h.Sections[i+1].Width}
+				k3 = SplinePoint{l: h.Sections[i+1].Start, w: h.Sections[i+1].Keel}
 			}
 
 			break
@@ -77,9 +87,11 @@ func (h *Hull) GetDimensions(x int) Dimensions {
 		algorithm = h.Sections[i].Tweening
 
 		p1 = SplinePoint{l: h.Sections[i].Start, w: h.Sections[i].Width}
+		k1 = SplinePoint{l: h.Sections[i].Start, w: h.Sections[i].Keel}
 
 		if i > 0 {
 			p0 = SplinePoint{l: h.Sections[i-1].Start, w: h.Sections[i-1].Width}
+			k0 = SplinePoint{l: h.Sections[i-1].Start, w: h.Sections[i-1].Keel}
 		}
 
 
@@ -116,10 +128,16 @@ func (h *Hull) GetDimensions(x int) Dimensions {
 		st2 := getT(st1, p1, p2)
 		st3 := getT(st2, p2, p3)
 
+		stk0 := 0.0
+		stk1 := getT(stk0, k0, k1)
+		stk2 := getT(stk1, k1, k2)
+		stk3 := getT(stk2, k2, k3)
+		
 		var curP, nextP SplinePoint
+		var curK, nextK SplinePoint
 		foundEnd := false
 
-		for st := st1; st < st2; st += (st2 - st1) / (tweenLength * float64(h.Length)) {
+		for st := st1; st < st2; st += (st2 - st1) / (tweenLength * float64(length)) {
 			a1 := p0.Mul((st1 - st) / (st1 - st0)).Add(p1.Mul((st - st0) / (st1 - st0)))
 			a2 := p1.Mul((st2 - st) / (st2 - st1)).Add(p2.Mul((st - st1) / (st2 - st1)))
 			a3 := p2.Mul((st3 - st) / (st3 - st2)).Add(p3.Mul((st - st2) / (st3 - st2)))
@@ -138,27 +156,49 @@ func (h *Hull) GetDimensions(x int) Dimensions {
 			}
 		}
 
+		for stk := stk1; stk < stk2; stk += (stk2 - stk1) / (tweenLength * float64(length)) {
+			a1 := k0.Mul((stk1 - stk) / (stk1 - stk0)).Add(k1.Mul((stk - stk0) / (stk1 - stk0)))
+			a2 := k1.Mul((stk2 - stk) / (stk2 - stk1)).Add(k2.Mul((stk - stk1) / (stk2 - stk1)))
+			a3 := k2.Mul((stk3 - stk) / (stk3 - stk2)).Add(k3.Mul((stk - stk2) / (stk3 - stk2)))
+
+			b1 := a1.Mul((stk2-stk)/(stk2-stk0)).Add(a2.Mul((stk - stk0)/(stk2-stk0)))
+			b2 := a2.Mul((stk3-stk)/(stk3-stk1)).Add(a3.Mul((stk - stk1)/(stk3-stk1)))
+
+			c := b1.Mul((stk2 - stk)/(stk2-stk1)).Add(b2.Mul((stk-stk1)/(stk2-stk1)))
+
+			if c.l < fraction {
+				curK = c
+			} else {
+				nextK = c
+				foundEnd = true
+				break
+			}
+		}
+
+
 		l := nextP.l - curP.l
 		t1 = (fraction - curP.l) / l
 		t2 = 1.0 - t1
 
 		w := curP.w
+		k := curK.w
 
 		if foundEnd {
 			w = (curP.w * t2) + (nextP.w * t1)
+			k = (curK.w * t2) + (nextK.w * t1)
 		}
 
 		return Dimensions{
-			Width: int(w * float64(h.Width)),
-			Keel: int((1.0 - ((curKeel * t1) + (nextKeel * t2))) * float64(h.Height)),
+			Width: int(w * float64(width)),
+			Keel: int((1.0 - k) * float64(height)),
 		}
 
 
 	}
 
 	return Dimensions{
-		Width: int(((curWidth * t1) + (nextWidth * t2)) * float64(h.Width)),
-		Keel: int((1.0 - ((curKeel * t1) + (nextKeel * t2))) * float64(h.Height)),
+		Width: int(((curWidth * t1) + (nextWidth * t2)) * float64(width)),
+		Keel: int((1.0 - ((curKeel * t1) + (nextKeel * t2))) * float64(height)),
 	}
 }
 
@@ -168,7 +208,7 @@ func getT(t float64, p0, p1 SplinePoint) float64 {
 	return b + t
 }
 
-func FromFile(filename string) (h Hull, err error) {
+func FromFile(filename string) (h HullFile, err error) {
 	handle, err := os.Open(filename)
 	defer handle.Close()
 	if err != nil {

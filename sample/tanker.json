@@ -3,30 +3,33 @@
   "height": 20,
   "length": 192,
   "width": 64,
-  "palette_index": 8,
-  "sections": [
+  "hulls": [
     {
-      "start": 0,
-      "width": 0,
-      "keel": 0.7,
-      "tween_algorithm": "square_root"
-    },
-    {
-      "start": 0.125,
-      "width": 1.0,
-      "keel": 0,
-      "tween_algorithm": "linear"
-    },
-    {
-      "start": 0.875,
-      "width": 1,
-      "keel": 0,
-      "tween_algorithm": "reverse_square_root"
-    },
-    {
-      "start": 0.99,
-      "width": 0,
-      "keel": 0.5
-    }
-  ]
+      "palette_index": 8,
+      "sections": [
+        {
+          "start": 0,
+          "width": 0,
+          "keel": 0.5,
+          "tween_algorithm": "square_root"
+        },
+        {
+          "start": 0.125,
+          "width": 1.0,
+          "keel": 0,
+          "tween_algorithm": "linear"
+        },
+        {
+          "start": 0.875,
+          "width": 1,
+          "keel": 0,
+          "tween_algorithm": "reverse_square_root"
+        },
+        {
+          "start": 0.99,
+          "width": 0,
+          "keel": 0.5
+        }
+      ]
+    }]
 }
